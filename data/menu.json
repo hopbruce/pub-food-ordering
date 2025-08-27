@@ -1,0 +1,114 @@
+{
+  "categories": [
+    {
+      "name": "Sharing Platters",
+      "items": [
+        {
+          "name": "Meat Eater (for 2)",
+          "description": "Brussels Pâté and Popcorn Chicken. Comes with croquettes, toasted French bread, fries and a spicy salsa.",
+          "price": 14.0,
+          "optionsNote": "Choose one base below — priced by platter size"
+        },
+        {
+          "name": "Meat Eater (for 4)",
+          "description": "Brussels Pâté and Popcorn Chicken. Comes with croquettes, toasted French bread, fries and a spicy salsa.",
+          "price": 24.0,
+          "optionsNote": "Choose one base below — priced by platter size"
+        },        
+        {
+          "name": "Vegetarian (for 2)",
+          "description": "Red Pepper Houmous and Garlic Mushrooms. Comes with croquettes, toasted French bread, fries and a spicy salsa.",
+          "price": 14.0,
+          "tags": ["veg"],
+          "optionsNote": "Choose one base below — priced by platter size"
+        },
+        {
+          "name": "Vegetarian (for 4)",
+          "description": "Red Pepper Houmous and Garlic Mushrooms. Comes with croquettes, toasted French bread, fries and a spicy salsa.",
+          "price": 24.0,
+          "tags": ["veg"],
+          "optionsNote": "Choose one base below — priced by platter size"
+        },        
+        {
+          "name": "Pescatarian (for 2)",
+          "description": "Smoked Salmon Pâté and Butterfly Prawns. Comes with croquettes, toasted French bread, fries and a spicy salsa.",
+          "price": 14.0,
+          "tags": ["pesc"],
+          "optionsNote": "Choose one base below — priced by platter size"
+        },
+        {
+          "name": "Pescatarian (for 4)",
+          "description": "Smoked Salmon Pâté and Butterfly Prawns. Comes with croquettes, toasted French bread, fries and a spicy salsa.",
+          "price": 24.0,
+          "tags": ["pesc"],
+          "optionsNote": "Choose one base below — priced by platter size"
+        }
+      ]
+    },
+    {
+      "name": "Main Courses",
+      "items": [
+        {
+          "name": "Moules Marinière",
+          "description": "Half kilo Shetland mussels in a white wine, shallot, garlic and cream sauce with frites & bread.",
+          "price": 16.0
+        },
+        {
+          "name": "Moules Special",
+          "description": "Ask for details.",
+          "price": 16.0
+        },
+        {
+          "name": "Kilo Mussels (for two to share)",
+          "description": "",
+          "price": 26.0
+        },
+        {
+          "name": "Vegan 'Moules'",
+          "description": "Roasted button mushrooms in a nori-infused white wine and vegan cream sauce served with frites & bread.",
+          "price": 15.0,
+          "tags": ["vg"]
+        },
+        {
+          "name": "Beef Carbonnade",
+          "description": "Traditional Flemish beef stew marinated in Westmalle Dubbel served with mustard toast.",
+          "price": 17.0
+        },
+        {
+          "name": "Haddock or Vegan Fish and Chips",
+          "description": "MSC haddock fillet or nori-wrapped tofu in a beer batter with chips, buttered garden or mushy peas and homemade tartare.",
+          "price": 16.0,
+          "tags": ["vg-option"]
+        },
+        {
+          "name": "Sausage and Stoemp (Belgian Mash)",
+          "description": "Pork & Ale or Vegan Lincolnshire sausages on stoemp with a porter and onion gravy.",
+          "price": 15.0,
+          "tags": ["vg-option"]
+        }
+      ]
+    },
+    {
+      "name": "Sides",
+      "items": [
+        { "name": "Pint of Fries", "price": 6.0 },
+        { "name": "Add Cheese or Katsu Curry Sauce to your fries", "price": 2.0 },
+        { "name": "Beer Battered Onion Rings", "price": 5.0 },
+        { "name": "Bread & Butter", "price": 3.0 },
+        { "name": "Halloumi Fries with a spicy chilli dip", "price": 6.0, "tags": ["veg"] },
+        { "name": "Breaded Mozzarella Sticks with a spicy mayo", "price": 6.0, "tags": ["veg"] }
+      ]
+    },
+    {
+      "name": "Desserts",
+      "items": [
+        {
+          "name": "Belgian Sweet Waffles",
+          "description": "(vg) with strawberries or banana and: Judes Vanilla (vg), or Belgian Chocolate or Cornish Honeycomb Ice Cream; and Chocolate Sauce (vg) or Whipped Cream or Nutella.",
+          "price": 7.0,
+          "tags": ["vg"]
+        }
+      ]
+    }
+  ]
+}

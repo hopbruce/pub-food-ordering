@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root{color-scheme:dark}
+html,body{@apply bg-pubbg text-white}
+a{@apply text-pubaccent}
+.btn{@apply inline-flex items-center justify-center rounded-2xl px-4 py-2 font-medium transition shadow}
+.btn-primary{@apply bg-pubaccent text-black hover:opacity-90}
+.card{@apply bg-pubcard rounded-2xl p-4 shadow-lg border border-neutral-800}
+input,textarea,select{@apply bg-neutral-900 border border-neutral-700 rounded-xl px-3 py-2 w-full text-white placeholder-neutral-400}
+label{@apply block text-sm font-medium mb-1}
+.badge{@apply inline-flex items-center text-xs px-2 py-1 rounded-full bg-neutral-800 border border-neutral-700}
+.sticky-bar{@apply fixed bottom-0 inset-x-0 bg-neutral-950/90 backdrop-blur border-t border-neutral-800 p-3}

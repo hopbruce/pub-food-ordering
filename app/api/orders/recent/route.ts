@@ -1,0 +1,1 @@
+import { NextResponse } from 'next/server'; import { readOrders } from '@/lib/orders'; export async function GET(){ return NextResponse.json(readOrders().slice(0,20)); }
