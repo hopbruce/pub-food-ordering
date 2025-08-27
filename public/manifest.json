@@ -1,0 +1,16 @@
+{
+  "name": "The Pub \u2014 Ordering",
+  "short_name": "The Pub",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f12",
+  "theme_color": "#d4a373",
+  "icons": [
+    {
+      "src": "/brand.svg",
+      "sizes": "128x128",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    }
+  ]
+}
