@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import type { MenuData, MenuItem } from "@/lib/types";
-import { useCart } from "@/components/cart/CartContext";
-import { useToaster } from "@/components/Toaster";
+import type { MenuData, MenuItem } from "../lib/types";
+import { useCart } from "../components/cart/CartContext";
+import { useToaster } from "../components/Toaster";
 import clsx from "clsx";
 
 export default function MenuClient({ menu }: { menu: MenuData }) {
