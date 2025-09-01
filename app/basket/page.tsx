@@ -1,5 +1,6 @@
 "use client";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
@@ -20,16 +21,22 @@ function money(n: number) {
 }
 
 export default function BasketPage() {
-  const { items, updateQty, removeItem, clear } = useCart();
+  const cart = useCart() as
+    | { items?: CartItem[]; updateQty: (s: string, q: number) => void; removeItem: (s: string) => void; clear: () => void }
+    | undefined;
+
+  // guard against undefined context during server render/prerender
+  const items: CartItem[] = Array.isArray(cart?.items) ? (cart!.items as CartItem[]) : [];
+  const updateQty = cart?.updateQty ?? (() => {});
+  const removeItem = cart?.removeItem ?? (() => {});
+  const clear = cart?.clear ?? (() => {});
+
   const [tableNumber, setTableNumber] = useState("");
   const [contactName, setContactName] = useState("");
   const [phone, setPhone] = useState("");
   const [allergies, setAllergies] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [settings, setSettings] = useState<Settings>({
-    kitchenOpen: true,
-    serviceChargePercent: 0,
-  });
+  const [settings, setSettings] = useState<Settings>({ kitchenOpen: true, serviceChargePercent: 0 });
 
   useEffect(() => {
     fetch("/api/kitchen")
@@ -38,10 +45,7 @@ export default function BasketPage() {
       .catch(() => {});
   }, []);
 
-  const subtotal = useMemo(
-    () => items.reduce((sum: number, it: CartItem) => sum + it.price * it.qty, 0),
-    [items]
-  );
+  const subtotal = useMemo(() => items.reduce((sum, it) => sum + it.price * it.qty, 0), [items]);
   const service = useMemo(() => subtotal * (settings.serviceChargePercent || 0), [subtotal, settings]);
   const total = subtotal + service;
 
@@ -55,7 +59,7 @@ export default function BasketPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: items.map((i: CartItem) => ({ slug: i.slug, qty: i.qty, notes: i.notes || "" })),
+          items: items.map((i) => ({ slug: i.slug, qty: i.qty, notes: i.notes || "" })),
           tableNumber,
           contactName,
           phone,
@@ -69,7 +73,7 @@ export default function BasketPage() {
       } else {
         alert(data.message || "Could not place order");
       }
-    } catch (e) {
+    } catch {
       alert("Something went wrong placing the order.");
     } finally {
       setSubmitting(false);
@@ -84,7 +88,7 @@ export default function BasketPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: items.map((i: CartItem) => ({ slug: i.slug, qty: i.qty, notes: i.notes || "" })),
+          items: items.map((i) => ({ slug: i.slug, qty: i.qty, notes: i.notes || "" })),
           tableNumber,
           contactName,
           phone,
@@ -93,11 +97,11 @@ export default function BasketPage() {
       });
       const data = await res.json();
       if (data.ok && data.url) {
-        window.location.href = data.url; // Stripe Checkout (Apple/Google Pay supported)
+        window.location.href = data.url; // Stripe Checkout (Apple Pay / Google Pay supported)
       } else {
         alert(data.message || "Could not start payment");
       }
-    } catch (e) {
+    } catch {
       alert("Something went wrong starting payment.");
     } finally {
       setSubmitting(false);
@@ -112,7 +116,7 @@ export default function BasketPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section className="space-y-3">
           {items.length === 0 && <p className="text-neutral-300">Your basket is empty.</p>}
-          {items.map((it: CartItem) => (
+          {items.map((it) => (
             <div key={it.slug} className="rounded-xl bg-neutral-900 border border-neutral-800 p-4 flex items-center justify-between">
               <div>
                 <div className="font-medium">{it.name}</div>
