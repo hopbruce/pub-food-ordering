@@ -1,5 +1,16 @@
-const buckets = new Map<string,{count:number;reset:number}>();
-export function rateLimit(ip:string, limit=20, windowMs=60_000){ const now=Date.now(); const b=buckets.get(ip);
-  if(!b||b.reset<now){ buckets.set(ip,{count:1,reset:now+windowMs}); return true; }
-  if(b.count>=limit) return false; b.count+=1; return true;
+// lib/rateLimit.ts
+// super-simple in-memory rate limiter (per key)
+const hits: Record<string, number[]> = {};
+
+export function rateLimit(key: string, limit = 20, windowMs = 60_000) {
+  const now = Date.now();
+  const arr = (hits[key] ||= []);
+  // drop old timestamps
+  while (arr.length && now - arr[0] > windowMs) arr.shift();
+  if (arr.length >= limit) {
+    const retryAfter = Math.ceil((windowMs - (now - arr[0])) / 1000);
+    return { ok: false, retryAfter };
+  }
+  arr.push(now);
+  return { ok: true, retryAfter: 0 };
 }
