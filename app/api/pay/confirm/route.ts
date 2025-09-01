@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     const settings = getSettings();
 
     let subtotal = 0;
-    const normalized = itemsRaw.map((ci: any) => {
+    const normalized = (itemsRaw as any[]).map((ci) => {
       const db = findItem(ci.slug);
       if (!db) throw new Error(`Unknown item: ${ci.slug}`);
       const qty = Math.max(1, Number(ci.qty) || 1);
