@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findItem } from "@/lib/menu"; import { createOrder, updateSmsStatus } from "@/lib/orders";
-import { rateLimit } from "@/lib/rateLimit"; import { enforceSameOrigin } from "@/lib/cors";
-import { getSettings } from "@/lib/settings"; import { sendOrderSms } from "@/lib/sms";
+import { findItem } from "@/lib/menu"; import { createOrder, updateSmsStatus } from "../../../lib/orders";
+import { rateLimit } from "@/lib/rateLimit"; import { enforceSameOrigin } from "../../../lib/cors";
+import { getSettings } from "@/lib/settings"; import { sendOrderSms } from "../../../lib/sms";
 
 function getIp(req: NextRequest){
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "127.0.0.1";
