@@ -35,11 +35,63 @@ export async function POST(req: NextRequest) {
 
     const settings = getSettings();
 
-    const norm = items.map((ci) => {
+    // Normalise items against menu and build Stripe line items
+    const normalised = items.map((ci) => {
       const db = findItem(ci.slug);
       if (!db) throw new Error(`Unknown item: ${ci.slug}`);
       const qty = Math.max(1, Number(ci.qty) || 1);
       return { name: db.name, qty, unit_amount: toMinor(db.price) };
     });
 
-    const line_i_
+    const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = normalised.map((n) => ({
+      quantity: n.qty,
+      price_data: {
+        currency: "gbp",
+        unit_amount: n.unit_amount,
+        product_data: { name: n.name },
+      },
+    }));
+
+    // Service charge
+    const subtotalP = normalised.reduce((s, n) => s + n.unit_amount * n.qty, 0);
+    const serviceP = Math.round(subtotalP * (settings.serviceChargePercent || 0));
+    if (serviceP > 0) {
+      line_items.push({
+        quantity: 1,
+        price_data: {
+          currency: "gbp",
+          unit_amount: serviceP,
+          product_data: { name: "Service charge" },
+        },
+      });
+    }
+
+    const origin = req.headers.get("origin") || `https://${req.headers.get("host")}`;
+    const metadata = {
+      tableNumber: String(tableNumber),
+      contactName: contactName || "",
+      phone: phone || "",
+      allergies: allergies || "",
+      items: JSON.stringify(items).slice(0, 3500), // keep under metadata limit
+    };
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["card", "link"], // Apple Pay / Google Pay come via 'card'
+      phone_number_collection: { enabled: true },
+      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/basket`,
+      line_items,
+      metadata,
+      currency: "gbp",
+    });
+
+    return NextResponse.json({ ok: true, url: session.url });
+  } catch (e: any) {
+    console.error("checkout error", e);
+    return NextResponse.json(
+      { ok: false, message: e?.message || "Server error" },
+      { status: 500 }
+    );
+  }
+}
