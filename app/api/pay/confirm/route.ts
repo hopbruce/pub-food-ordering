@@ -20,8 +20,9 @@ function money(n: number) {
 export async function GET(req: NextRequest) {
   try {
     const session_id = new URL(req.url).searchParams.get("session_id");
-    if (!session_id)
+    if (!session_id) {
       return NextResponse.json({ ok: false, message: "Missing session_id" }, { status: 400 });
+    }
 
     const session = await stripe.checkout.sessions.retrieve(session_id);
     if (session.payment_status !== "paid") {
@@ -33,6 +34,39 @@ export async function GET(req: NextRequest) {
     const settings = getSettings();
 
     let subtotal = 0;
-    const normalized = (itemsRaw as any[]).map((ci) => {
+    const normalised = (itemsRaw as any[]).map((ci) => {
       const db = findItem(ci.slug);
-      if (!db)
+      if (!db) throw new Error(`Unknown item: ${ci.slug}`);
+      const qty = Math.max(1, Number(ci.qty) || 1);
+      const priceEach = Number(db.price) || 0;
+      subtotal += priceEach * qty;
+      return { slug: ci.slug, name: db.name, price: priceEach, qty, notes: ci.notes || "" };
+    });
+
+    subtotal = money(subtotal);
+    const service = money(subtotal * (settings.serviceChargePercent || 0));
+    const total = money(subtotal + service);
+    const orderId = (session.client_reference_id || uuidv4().slice(0, 8)).toUpperCase();
+    const placedAt = new Date().toISOString();
+
+    addOrder({
+      orderId,
+      tableNumber: String(md.tableNumber || ""),
+      items: normalised,
+      subtotal,
+      service,
+      total,
+      allergies: md.allergies || "",
+      placedAt,
+      smsStatus: "pending",
+    });
+
+    return NextResponse.json({ ok: true, orderId, etaMinutes: 15 });
+  } catch (e: any) {
+    console.error("confirm error", e);
+    return NextResponse.json(
+      { ok: false, message: e?.message || "Server error" },
+      { status: 500 }
+    );
+  }
+}
