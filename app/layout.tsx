@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Pub food ordering",
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = false;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
