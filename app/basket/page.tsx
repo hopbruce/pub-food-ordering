@@ -1,5 +1,5 @@
+export const dynamic = "force-dynamic";
 "use client";
-
 import { useEffect, useState } from "react";
 import { useCart } from "../../components/cart/CartContext";
 import { loadStripe } from "@stripe/stripe-js";
