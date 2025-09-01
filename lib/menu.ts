@@ -24,4 +24,3 @@ export function findItem(slug: string) {
   }
   return null;
 }
-
