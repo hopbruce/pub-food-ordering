@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { CartLine, MenuItem } from "@/lib/types";
+import type { CartLine, MenuItem } from "../../lib/types";
 import { addToCart as add, removeFromCart as remove, updateQty as update, totals } from "@/lib/cart";
 
 type CartCtx = {
