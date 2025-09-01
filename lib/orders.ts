@@ -1,23 +1,68 @@
-import fs from "node:fs"; import path from "node:path"; import { v4 as uuidv4 } from "uuid";
-import type { Order, CartLine } from "./types";
-const ordersPath = path.join(process.cwd(),"data","orders.json");
-export function readOrders(): Order[] { try { return JSON.parse(fs.readFileSync(ordersPath,"utf-8")); } catch { return []; } }
-export function writeOrders(orders: Order[]){ fs.writeFileSync(ordersPath, JSON.stringify(orders,null,2)); }
-export function createOrder(payload:{ items: CartLine[]; tableNumber: string; contactName?: string; phone?: string; allergies?: string; servicePercent: number; }): Order {
-  const subtotal = payload.items.reduce((sum,it)=>sum + it.price*it.qty, 0);
-  const service = Math.round(subtotal * payload.servicePercent) / 100;
-  const total = subtotal + service;
-  const orderId = uuidv4().split("-")[0].toUpperCase();
-  const placedAt = new Date().toISOString();
-  const order: Order = {
-    orderId, items: payload.items, subtotal: round2(subtotal), service: round2(service), total: round2(total),
-    tableNumber: payload.tableNumber, contactName: payload.contactName, phone: payload.phone, allergies: payload.allergies,
-    placedAt, smsStatus: "pending"
-  };
-  const orders = readOrders(); orders.unshift(order); writeOrders(orders); return order;
+// lib/orders.ts
+import fs from "fs";
+import path from "path";
+
+export type OrderItem = {
+  slug: string;
+  name: string;
+  price: number;
+  qty: number;
+  notes?: string;
+};
+
+export type Order = {
+  orderId: string;
+  tableNumber: string;
+  items: OrderItem[];
+  subtotal: number;
+  service: number;
+  total: number;
+  allergies?: string;
+  placedAt: string; // ISO
+  smsStatus?: "sent" | "pending" | "error";
+};
+
+const DATA_DIR = path.join(process.cwd(), "data");
+const ORDERS_PATH = path.join(DATA_DIR, "orders.json");
+
+let mem: Order[] = [];
+
+function ensureFile() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    if (!fs.existsSync(ORDERS_PATH)) fs.writeFileSync(ORDERS_PATH, "[]");
+  } catch {
+    // read-only env → we'll just use memory
+  }
 }
-export function updateSmsStatus(orderId: string, status: Order["smsStatus"]){
-  const orders = readOrders(); const idx = orders.findIndex(o=>o.orderId===orderId);
-  if (idx>=0){ orders[idx].smsStatus = status; writeOrders(orders); }
+
+function readAll(): Order[] {
+  ensureFile();
+  try {
+    const raw = fs.readFileSync(ORDERS_PATH, "utf-8");
+    mem = JSON.parse(raw) as Order[];
+  } catch {
+    // ignore, keep mem
+  }
+  return mem;
 }
-function round2(n:number){ return Math.round(n*100)/100; }
+
+function writeAll(list: Order[]) {
+  mem = list;
+  try {
+    ensureFile();
+    fs.writeFileSync(ORDERS_PATH, JSON.stringify(list, null, 2));
+  } catch {
+    // read-only env → ok to keep memory only
+  }
+}
+
+export function addOrder(o: Order) {
+  const all = readAll();
+  all.unshift(o);
+  writeAll(all);
+}
+
+export function getRecentOrders(limit = 20): Order[] {
+  return readAll().slice(0, limit);
+}
