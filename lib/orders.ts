@@ -32,18 +32,15 @@ function ensureFile() {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     if (!fs.existsSync(ORDERS_PATH)) fs.writeFileSync(ORDERS_PATH, "[]");
   } catch {
-    // read-only env → we'll just use memory
+    // read-only env — fine, memory fallback only
   }
 }
 
 function readAll(): Order[] {
   ensureFile();
   try {
-    const raw = fs.readFileSync(ORDERS_PATH, "utf-8");
-    mem = JSON.parse(raw) as Order[];
-  } catch {
-    // ignore, keep mem
-  }
+    mem = JSON.parse(fs.readFileSync(ORDERS_PATH, "utf8")) as Order[];
+  } catch {}
   return mem;
 }
 
@@ -52,15 +49,17 @@ function writeAll(list: Order[]) {
   try {
     ensureFile();
     fs.writeFileSync(ORDERS_PATH, JSON.stringify(list, null, 2));
-  } catch {
-    // read-only env → ok to keep memory only
-  }
+  } catch {}
 }
 
 export function addOrder(o: Order) {
   const all = readAll();
   all.unshift(o);
   writeAll(all);
+}
+
+export function readOrders(): Order[] {
+  return readAll();
 }
 
 export function getRecentOrders(limit = 20): Order[] {
