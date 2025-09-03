@@ -26,15 +26,24 @@ const Ctx = createContext<CartCtx | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
 
-  // initial load from localStorage
+  // 1) initial load from localStorage
   useEffect(() => {
     setItems(loadCart());
   }, []);
 
-  // keep localStorage in sync
+  // 2) keep localStorage in sync
   useEffect(() => {
-    if (typeof window !== "undefined") saveCart(items);
+    saveCart(items);
   }, [items]);
+
+  // 3) react to cross-tab / full reload rehydration
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "cart") setItems(loadCart());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   const api: CartCtx = useMemo(
     () => ({
