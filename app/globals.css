@@ -11,3 +11,42 @@ input,textarea,select{@apply bg-neutral-900 border border-neutral-700 rounded-xl
 label{@apply block text-sm font-medium mb-1}
 .badge{@apply inline-flex items-center text-xs px-2 py-1 rounded-full bg-neutral-800 border border-neutral-700}
 .sticky-bar{@apply fixed bottom-0 inset-x-0 bg-neutral-950/90 backdrop-blur border-t border-neutral-800 p-3}
+/* --- Light/Blue theme overrides for existing utility classes --- */
+@layer utilities {
+  /* backgrounds that used to be near-black -> white */
+  .bg-neutral-950,
+  .bg-neutral-900 {
+    @apply bg-white;
+  }
+
+  /* darker button backgrounds -> blue */
+  .bg-neutral-800 { @apply bg-blue-600 text-white; }
+  .bg-neutral-700 { @apply bg-blue-500 text-white; }
+  .bg-neutral-200 { @apply bg-blue-50; }
+
+  /* borders -> subtle slate */
+  .border-neutral-800 { @apply border-slate-200; }
+
+  /* text colors -> slate on white */
+  .text-white { @apply text-slate-900; }
+  .text-neutral-300 { @apply text-slate-700; }
+  .text-neutral-400 { @apply text-slate-600; }
+
+  /* inputs that relied on very dark bg */
+  .bg-neutral-950.border-neutral-800 {
+    @apply bg-white border-slate-300 text-slate-900;
+  }
+
+  /* generic focus ring to match blue theme */
+  .focus\:ring-amber-500,
+  .focus\:ring-amber-600,
+  .focus\:ring-amber-700 {
+    @apply focus:ring-blue-600;
+  }
+}
+
+/* Optional: make primary call-to-action buttons blue if they were amber */
+.button-primary,
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
