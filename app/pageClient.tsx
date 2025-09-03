@@ -28,6 +28,7 @@ export default function PageClient({ menu }: { menu: MenuData }) {
   const [q, setQ] = useState("");
   const [tag, setTag] = useState<"" | "vg" | "veg" | "pesc">("");
   const [cat, setCat] = useState<string>(menu.categories?.[0]?.name || "");
+  const [toast, setToast] = useState<string>("");
 
   const normalized = useMemo(() => {
     return (menu.categories || []).map((c) => ({
@@ -42,7 +43,7 @@ export default function PageClient({ menu }: { menu: MenuData }) {
     const needle = q.trim().toLowerCase();
     const out: { cat: string; items: MenuData["categories"][number]["items"] }[] = [];
     for (const c of normalized) {
-      if (c.name !== cat) continue; // ONLY current tab
+      if (c.name !== cat) continue;
       let items = c.items;
       if (needle) {
         items = items.filter(
@@ -51,13 +52,17 @@ export default function PageClient({ menu }: { menu: MenuData }) {
             (i.description || "").toLowerCase().includes(needle)
         );
       }
-      if (tag) {
-        items = items.filter((i) => (i.tags || []).includes(tag));
-      }
+      if (tag) items = items.filter((i) => (i.tags || []).includes(tag));
       out.push({ cat: c.name, items });
     }
     return out;
   }, [normalized, q, tag, cat]);
+
+  function handleAdd(i: any) {
+    add({ slug: i.slug!, qty: 1, name: i.name, price: i.price });
+    setToast(`Added: ${i.name}`);
+    setTimeout(() => setToast(""), 900);
+  }
 
   return (
     <main className="max-w-6xl mx-auto p-4">
@@ -102,7 +107,7 @@ export default function PageClient({ menu }: { menu: MenuData }) {
         </select>
       </div>
 
-      {/* list for the selected category only */}
+      {/* list for selected category */}
       {visibleItems.map(({ cat, items }) => (
         <section key={cat} className="mt-5">
           <h2 className="text-xl text-white font-semibold mb-3">{cat}</h2>
@@ -126,7 +131,7 @@ export default function PageClient({ menu }: { menu: MenuData }) {
                     {money(i.price || 0)}
                   </span>
                   <button
-                    onClick={() => add({ slug: i.slug!, qty: 1, name: i.name, price: i.price })}
+                    onClick={() => handleAdd(i)}
                     className="rounded-md bg-white text-black px-3 py-2 hover:bg-neutral-200"
                     aria-label={`Add ${i.name}`}
                   >
@@ -144,6 +149,13 @@ export default function PageClient({ menu }: { menu: MenuData }) {
           </div>
         </section>
       ))}
+
+      {/* tiny toast */}
+      {toast && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-white text-black px-3 py-2 rounded-md shadow">
+          {toast}
+        </div>
+      )}
     </main>
   );
 }
