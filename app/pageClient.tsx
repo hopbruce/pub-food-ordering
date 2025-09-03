@@ -1,161 +1,163 @@
-// app/pageClient.tsx
 "use client";
 
 import { useMemo, useState } from "react";
+import type { MenuData, MenuItem } from "@/lib/types";
 import { useCart } from "@/components/cart/CartContext";
-import { slugify } from "@/lib/menu";
+import clsx from "clsx";
 
-type MenuData = {
-  categories: {
-    name: string;
-    items: {
-      name: string;
-      description?: string;
-      price: number;
-      optionsNote?: string;
-      tags?: string[];
-      slug?: string;
-    }[];
-  }[];
-};
+type Props = { menu: MenuData };
 
-function money(n: number) {
-  return `£${(Math.round(n * 100) / 100).toFixed(2)}`;
-}
+const TAG_OPTIONS = [
+  { label: "All", value: "all" },
+  { label: "Vegetarian", value: "veg" },
+  { label: "Vegan", value: "vg" },
+  { label: "Pescatarian", value: "pesc" },
+];
 
-export default function PageClient({ menu }: { menu: MenuData }) {
+export default function PageClient({ menu }: Props) {
   const { add } = useCart();
-  const [q, setQ] = useState("");
-  const [tag, setTag] = useState<"" | "vg" | "veg" | "pesc">("");
-  const [cat, setCat] = useState<string>(menu.categories?.[0]?.name || "");
-  const [toast, setToast] = useState<string>("");
+  const [activeCat, setActiveCat] = useState(0);
+  const [query, setQuery] = useState("");
+  const [tag, setTag] = useState(TAG_OPTIONS[0].value);
 
-  const normalized = useMemo(() => {
-    return (menu.categories || []).map((c) => ({
-      ...c,
-      items: c.items.map((i) => ({ ...i, slug: i.slug || slugify(i.name) })),
-    }));
-  }, [menu]);
+  const categories = menu.categories ?? [];
 
-  const categories = normalized.map((c) => c.name);
+  const filteredItems = useMemo(() => {
+    const cat = categories[activeCat];
+    if (!cat) return [];
+    const q = query.trim().toLowerCase();
 
-  const visibleItems = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    const out: { cat: string; items: MenuData["categories"][number]["items"] }[] = [];
-    for (const c of normalized) {
-      if (c.name !== cat) continue;
-      let items = c.items;
-      if (needle) {
-        items = items.filter(
-          (i) =>
-            i.name.toLowerCase().includes(needle) ||
-            (i.description || "").toLowerCase().includes(needle)
+    return (cat.items ?? []).filter((item: MenuItem) => {
+      const matchesQuery =
+        !q ||
+        item.name.toLowerCase().includes(q) ||
+        (item.description ?? "").toLowerCase().includes(q);
+
+      const matchesTag =
+        tag === "all" ||
+        (item.tags ?? []).some((t) =>
+          // normalize: "veg", "vg", "vg-option", "pesc"
+          (t || "").toLowerCase().includes(tag)
         );
-      }
-      if (tag) items = items.filter((i) => (i.tags || []).includes(tag));
-      out.push({ cat: c.name, items });
-    }
-    return out;
-  }, [normalized, q, tag, cat]);
 
-  function handleAdd(i: any) {
-    add({ slug: i.slug!, qty: 1, name: i.name, price: i.price });
-    setToast(`Added: ${i.name}`);
-    setTimeout(() => setToast(""), 900);
+      return matchesQuery && matchesTag;
+    });
+  }, [categories, activeCat, query, tag]);
+
+  function handleAdd(item: MenuItem) {
+    // Minimal payload (your CartContext will normalize/stash in localStorage)
+    add({
+      slug: item.slug,
+      name: item.name,
+      price: item.price,
+      qty: 1,
+    } as any);
   }
 
   return (
-    <main className="max-w-6xl mx-auto p-4">
-      {/* brand */}
-      <div className="mb-4 flex items-center gap-2">
-        <div className="h-8 w-8 rounded-full bg-amber-500" />
-        <div className="text-white font-semibold text-lg">The Pub</div>
-      </div>
+    <main className="max-w-6xl mx-auto px-4 pb-24">
+      {/* Removed the old “The Pub” lockup */}
 
-      {/* tabs */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-        {categories.map((c) => (
+      {/* Category tabs */}
+      <nav className="flex flex-wrap gap-3 pt-4" aria-label="Categories">
+        {categories.map((c, idx) => (
           <button
-            key={c}
-            onClick={() => setCat(c)}
-            className={`px-3 py-2 rounded-full border ${
-              cat === c ? "bg-amber-600 border-amber-500 text-black" : "bg-neutral-900 border-neutral-800 text-white"
-            }`}
+            key={c.name}
+            onClick={() => setActiveCat(idx)}
+            className={clsx(
+              "px-4 py-2 rounded-full border transition",
+              idx === activeCat
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white text-slate-900 border-slate-300 hover:border-blue-400"
+            )}
+            aria-current={idx === activeCat ? "page" : undefined}
           >
-            {c}
+            {c.name}
           </button>
         ))}
-      </div>
+      </nav>
 
-      {/* search + filter */}
-      <div className="mt-3 flex gap-2">
-        <input
-          className="flex-1 rounded-md bg-neutral-900 border border-neutral-800 px-3 py-2 text-white"
-          placeholder="Search menu…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
-        <select
-          className="w-40 rounded-md bg-neutral-900 border border-neutral-800 px-3 py-2 text-white"
-          value={tag}
-          onChange={(e) => setTag(e.target.value as any)}
-        >
-          <option value="">All</option>
-          <option value="vg">Vegan</option>
-          <option value="veg">Vegetarian</option>
-          <option value="pesc">Pescatarian</option>
-        </select>
-      </div>
+      {/* Search + tag filter */}
+      <div className="mt-4 flex flex-col sm:flex-row gap-3">
+        <label className="flex-1">
+          <span className="sr-only">Search menu</span>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search menu…"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          />
+        </label>
 
-      {/* list for selected category */}
-      {visibleItems.map(({ cat, items }) => (
-        <section key={cat} className="mt-5">
-          <h2 className="text-xl text-white font-semibold mb-3">{cat}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {items.map((i) => (
-              <div
-                key={i.slug}
-                className="rounded-xl bg-neutral-900 border border-neutral-800 p-4 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="text-white font-medium">{i.name}</div>
-                  {i.description ? (
-                    <div className="text-sm text-neutral-400 mt-1">{i.description}</div>
-                  ) : null}
-                  {i.optionsNote ? (
-                    <div className="text-xs text-neutral-500 mt-1">{i.optionsNote}</div>
-                  ) : null}
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="inline-block rounded-md bg-amber-600 text-black px-2 py-1 text-sm">
-                    {money(i.price || 0)}
-                  </span>
-                  <button
-                    onClick={() => handleAdd(i)}
-                    className="rounded-md bg-white text-black px-3 py-2 hover:bg-neutral-200"
-                    aria-label={`Add ${i.name}`}
-                  >
-                    + Add
-                  </button>
-                </div>
-                {i.tags?.length ? (
-                  <div className="mt-2 text-xs text-neutral-400">Tags: {i.tags.join(", ")}</div>
-                ) : null}
-              </div>
+        <label className="w-full sm:w-48">
+          <span className="sr-only">Filter by tag</span>
+          <select
+            value={tag}
+            onChange={(e) => setTag(e.target.value)}
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          >
+            {TAG_OPTIONS.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
             ))}
-            {items.length === 0 && (
-              <div className="text-neutral-400">No items match your filter.</div>
-            )}
-          </div>
-        </section>
-      ))}
+          </select>
+        </label>
+      </div>
 
-      {/* tiny toast */}
-      {toast && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-white text-black px-3 py-2 rounded-md shadow">
-          {toast}
-        </div>
-      )}
-    </main>
-  );
-}
+      {/* Category heading */}
+      <h2 className="mt-6 text-2xl font-semibold text-slate-900">
+        {categories[activeCat]?.name ?? "Menu"}
+      </h2>
+
+      {/* Items grid */}
+      <section
+        className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-2"
+        aria-label="Menu items"
+      >
+        {filteredItems.map((item) => (
+          <article
+            key={item.slug ?? item.name}
+            className="rounded-xl border border-slate-200 bg-white p-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="text-lg font-semibold text-slate-900">
+                {item.name}
+              </h3>
+              {typeof item.price === "number" && item.price > 0 ? (
+                <span className="inline-block rounded-md bg-blue-100 px-2.5 py-1 text-sm font-semibold text-blue-700">
+                  £{item.price.toFixed(2)}
+                </span>
+              ) : (
+                <span className="inline-block rounded-md bg-slate-100 px-2.5 py-1 text-sm text-slate-600">
+                  See options
+                </span>
+              )}
+            </div>
+
+            {item.description ? (
+              <p className="mt-2 text-slate-700 leading-relaxed">
+                {item.description}
+              </p>
+            ) : null}
+
+            {item.optionsNote ? (
+              <p className="mt-2 text-sm text-slate-500">{item.optionsNote}</p>
+            ) : null}
+
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-slate-500">
+                {(item.tags ?? []).length > 0 && (
+                  <span>Tags: {(item.tags ?? []).join(", ")}</span>
+                )}
+              </div>
+
+              <button
+                onClick={() => handleAdd(item)}
+                disabled={!(typeof item.price === "number" && item.price > 0)}
+                className={clsx(
+                  "rounded-full px-4 py-2 text-sm font-medium transition",
+                  typeof item.price === "number" && item.price > 0
+                    ? "bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    : "bg-slate-200 text-slate-500 cursor-not
