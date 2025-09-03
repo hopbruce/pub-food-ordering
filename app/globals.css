@@ -50,3 +50,22 @@ label{@apply block text-sm font-medium mb-1}
 .btn-primary {
   @apply bg-blue-600 text-white hover:bg-blue-700;
 }
+/* --- force amber/orange accents to blue --- */
+@layer utilities {
+  .bg-amber-50    { @apply bg-blue-50    !important; }
+  .bg-amber-100   { @apply bg-blue-100   !important; }
+  .bg-amber-200   { @apply bg-blue-200   !important; }
+  .bg-amber-300   { @apply bg-blue-300   !important; }
+  .bg-amber-400   { @apply bg-blue-400   !important; }
+  .bg-amber-500   { @apply bg-blue-500   !important; }
+  .bg-amber-600   { @apply bg-blue-600   !important; }
+  .bg-amber-700   { @apply bg-blue-700   !important; }
+  .bg-amber-800   { @apply bg-blue-800   !important; }
+  .bg-amber-900   { @apply bg-blue-900   !important; }
+
+  .text-amber-500 { @apply text-blue-600 !important; }
+  .text-amber-600 { @apply text-blue-700 !important; }
+  .ring-amber-600 { @apply ring-blue-600 !important; }
+  .border-amber-600 { @apply border-blue-600 !important; }
+}
+
