@@ -9,44 +9,38 @@ export type CartItem = {
   notes?: string;
 };
 
-function round2(n: number) {
-  return Math.round(n * 100) / 100;
+const R2 = (n: number) => Math.round(n * 100) / 100;
+
+function normalize(raw: Partial<CartItem> & { slug: string; qty?: number }): CartItem {
+  const db = findItem(raw.slug);
+  const name = raw.name ?? db?.name ?? raw.slug;
+  const price = typeof raw.price === "number" ? raw.price : Number(db?.price ?? 0) || 0;
+  const qty = Math.max(1, Number(raw.qty ?? 1) || 1);
+  const notes = raw.notes || "";
+  return { slug: raw.slug, name, price, qty, notes };
 }
 
-function normalize(incoming: Partial<CartItem> & { slug: string; qty?: number }) {
-  const fromMenu = findItem(incoming.slug);
-  const name = incoming.name ?? fromMenu?.name ?? incoming.slug;
-  const price = typeof incoming.price === "number" ? incoming.price : Number(fromMenu?.price ?? 0) || 0;
-  const qty = Math.max(1, Number(incoming.qty ?? 1) || 1);
-  const notes = incoming.notes || "";
-  return { slug: incoming.slug, name, price, qty, notes } as CartItem;
-}
-
-/** calculate money totals (servicePercent = 0..1) */
 export function totals(items: CartItem[], servicePercent = 0) {
-  // fill any missing prices from the menu defensively
-  const fixed = items.map((i) => normalize(i));
-  const subtotal = round2(fixed.reduce((s, it) => s + it.price * it.qty, 0));
-  const service = round2(subtotal * (servicePercent || 0));
-  const total = round2(subtotal + service);
+  const fixed = items.map(normalize);
+  const subtotal = R2(fixed.reduce((s, it) => s + it.price * it.qty, 0));
+  const service = R2(subtotal * (servicePercent || 0));
+  const total = R2(subtotal + service);
   return { subtotal, service, total };
 }
 
 export function addToCart(items: CartItem[], incoming: Partial<CartItem> & { slug: string; qty?: number }) {
-  const norm = normalize(incoming);
-  const idx = items.findIndex(
-    (i) => i.slug === norm.slug && (i.notes || "") === (norm.notes || "")
-  );
+  const next = normalize(incoming);
+  const idx = items.findIndex((i) => i.slug === next.slug && (i.notes || "") === (next.notes || ""));
   if (idx >= 0) {
-    const copy = [...items];
-    copy[idx] = { ...normalize(copy[idx]), qty: copy[idx].qty + norm.qty };
+    const copy = items.slice();
+    copy[idx] = { ...normalize(copy[idx]), qty: copy[idx].qty + next.qty };
     return copy;
-    }
-  return [...items, norm];
+  }
+  return [...items, next];
 }
 
 export function updateQty(items: CartItem[], slug: string, qty: number) {
-  const copy = items.map((i) => normalize(i));
+  const copy = items.map(normalize);
   const i = copy.findIndex((x) => x.slug === slug);
   if (i >= 0) copy[i] = { ...copy[i], qty: Math.max(1, Number(qty) || 1) };
   return copy;
@@ -61,7 +55,7 @@ export function loadCart(): CartItem[] {
   try {
     const raw = localStorage.getItem("cart");
     const parsed = raw ? (JSON.parse(raw) as any[]) : [];
-    return parsed.map((i) => normalize(i));
+    return parsed.map(normalize);
   } catch {
     return [];
   }
@@ -70,6 +64,6 @@ export function loadCart(): CartItem[] {
 export function saveCart(items: CartItem[]) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem("cart", JSON.stringify(items.map((i) => normalize(i))));
+    localStorage.setItem("cart", JSON.stringify(items.map(normalize)));
   } catch {}
 }
