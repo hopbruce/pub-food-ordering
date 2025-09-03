@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./providers";
-import dynamic from "next/dynamic";
+import NextDynamic from "next/dynamic"; // ⬅️ renamed
 
-const StickyBar = dynamic(() => import("@/components/cart/StickyBar"), { ssr: false });
+const StickyBar = NextDynamic(() => import("@/components/cart/StickyBar"), { ssr: false });
 
 export const metadata: Metadata = {
   title: "The Pub",
