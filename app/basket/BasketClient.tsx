@@ -1,3 +1,4 @@
+"use client";
 // rehydrate in case of full reload before context loads
 useEffect(() => {
   if (items.length === 0) {
