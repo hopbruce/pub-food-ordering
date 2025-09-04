@@ -1,67 +1,61 @@
-// components/cart/CartContext.tsx
 "use client";
-
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { CartItem } from "@/lib/cart";
 import {
-  addToCart as addFn,
-  updateQty as updateFn,
-  removeFromCart as removeFn,
-  loadCart,
-  saveCart,
-  totals as totalsFn,
-} from "@/lib/cart";
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  ReactNode,
+} from "react";
+import type { Cart, CartItem } from "@/lib/cart";
+import { addToCart, setQty, removeFromCart, totals } from "@/lib/cart";
 
-type CartCtx = {
-  items: CartItem[];
-  add: (input: { slug: string; qty?: number; notes?: string; name?: string; price?: number }) => void;
-  updateQty: (slug: string, qty: number) => void;
-  removeItem: (slug: string) => void;
+type Ctx = {
+  cart: Cart;
+  add: (slug: string, qty?: number) => void;
+  setQty: (slug: string, qty: number) => void;
+  remove: (slug: string) => void;
   clear: () => void;
-  totals: (servicePercent?: number) => { subtotal: number; service: number; total: number };
+  totals: { count: number; subtotal: number };
 };
 
-const Ctx = createContext<CartCtx | null>(null);
+const CartCtx = createContext<Ctx | undefined>(undefined);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+export function CartProvider({ children }: { children: ReactNode }) {
+  const [cart, setCart] = useState<Cart>([]);
 
-  // 1) initial load from localStorage
+  // load once on client
   useEffect(() => {
-    setItems(loadCart());
+    try {
+      const raw = localStorage.getItem("cart:v1");
+      if (raw) setCart(JSON.parse(raw));
+    } catch {}
   }, []);
 
-  // 2) keep localStorage in sync
+  // persist
   useEffect(() => {
-    saveCart(items);
-  }, [items]);
+    try {
+      localStorage.setItem("cart:v1", JSON.stringify(cart));
+    } catch {}
+  }, [cart]);
 
-  // 3) react to cross-tab / full reload rehydration
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "cart") setItems(loadCart());
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-
-  const api: CartCtx = useMemo(
+  const value = useMemo<Ctx>(
     () => ({
-      items,
-      add: (input) => setItems((prev) => addFn(prev, input)),
-      updateQty: (slug, qty) => setItems((prev) => updateFn(prev, slug, qty)),
-      removeItem: (slug) => setItems((prev) => removeFn(prev, slug)),
-      clear: () => setItems([]),
-      totals: (servicePercent = 0) => totalsFn(items, servicePercent),
+      cart,
+      add: (slug, qty = 1) => setCart((c) => addToCart(c, slug, qty)),
+      setQty: (slug, qty) => setCart((c) => setQty(c, slug, qty)),
+      remove: (slug) => setCart((c) => removeFromCart(c, slug)),
+      clear: () => setCart([]),
+      totals: totals(cart),
     }),
-    [items]
+    [cart]
   );
 
-  return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
+  return <CartCtx.Provider value={value}>{children}</CartCtx.Provider>;
 }
 
 export function useCart() {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("useCart must be used inside CartProvider");
+  const ctx = useContext(CartCtx);
+  if (!ctx) throw new Error("No CartProvider");
   return ctx;
 }
